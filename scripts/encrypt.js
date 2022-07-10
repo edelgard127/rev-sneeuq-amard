@@ -93,7 +93,7 @@ async function encryptTitle(titleDirPath) {
   // Create JSON file containing metadata of title
   console.log(`Creating metadata JSON for encrypted title '${titleName}'...`);
   await fsPromises.writeFile(
-    `${titleDirPath}/index.json`,
+    `content/${titleName}/index.json`,
     JSON.stringify({
       dimensions: dimensionsList,
       name: titleName,
