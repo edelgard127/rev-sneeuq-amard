@@ -13,8 +13,17 @@ function padNumber(n, padCount = 3) {
   return String(n).padStart(padCount, "0");
 }
 
+function decrypt(str) {
+  if (str.startsWith("Rev ")) {
+    return reverse(str.substring(4));
+  }
+
+  return str;
+}
+
 module.exports = {
   naturalCompare,
   reverse,
   padNumber,
+  decrypt,
 };

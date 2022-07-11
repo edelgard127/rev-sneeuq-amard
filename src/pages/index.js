@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+  useRef,
+} from "react";
 import { useInView } from "react-intersection-observer";
 import { graphql, Link } from "gatsby";
 import slugify from "slugify";
@@ -9,6 +15,7 @@ import { decryptBuffer, createBlobUrl } from "../utils/crypto";
 import { fetchWithRetries } from "../utils/fetch";
 import { naturalCompare, decrypt } from "../utils/string";
 import Layout from "../components/Layout";
+import Logo from "../components/Logo";
 import Image from "../components/Image";
 
 import * as styles from "./index.module.css";
@@ -60,8 +67,19 @@ function GridLayout(props) {
   const { sortedEntries } = props;
   const { height: windowHeight } = useWindowSize();
 
+  const onHeaderButtonClick = useCallback(() => {
+    if (window.top != null) {
+      window.top.postMessage("close", "*");
+    }
+  }, []);
+
   return (
     <Layout>
+      <div className={styles.header}>
+        <button className={styles.headerButton} onClick={onHeaderButtonClick}>
+          <Logo className={styles.headerIcon} />
+        </button>
+      </div>
       <div className={styles.containerGrid}>
         {sortedEntries.map(([titleName, thumbnails], index) => {
           const { relativePath, publicURL, name } = thumbnails[0];

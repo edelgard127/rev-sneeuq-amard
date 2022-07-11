@@ -1,3 +1,22 @@
+.header {
+  padding: 12px 0;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.headerButton {
+  flex: 0 0 36px;
+  width: 36px;
+  font-size: 0;
+}
+
+.headerIcon {
+  width: 100%;
+  fill: darkorchid;
+}
+
 .containerList {
   display: flex;
   flex-flow: column nowrap;

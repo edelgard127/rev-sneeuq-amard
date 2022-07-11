@@ -2,6 +2,8 @@ const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
 const slugify = require("slugify");
 
+const { naturalCompare, decrypt } = require("./scripts/utils/string");
+
 exports.createPages = async ({ graphql, actions }) => {
   const { createPage } = actions;
   const bookTemplate = path.resolve(`./src/templates/BookTemplate.js`);
@@ -25,6 +27,14 @@ exports.createPages = async ({ graphql, actions }) => {
   const {
     data: { bookJsons },
   } = result;
+
+  bookJsons.edges.sort(({ node: node1 }, { node: node2 }) => {
+    const decryptedName1 = decrypt(node1.name);
+    const decryptedName2 = decrypt(node2.name);
+
+    return naturalCompare(decryptedName1, decryptedName2);
+  });
+
   bookJsons.edges.forEach((bookJson, index) => {
     createPage({
       path: `/${slugify(bookJson.node.name.toLowerCase())}`,
