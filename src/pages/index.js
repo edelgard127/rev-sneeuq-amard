@@ -111,8 +111,19 @@ function ListLayout(props) {
   const { sortedEntries } = props;
   const { height: windowHeight } = useWindowSize();
 
+  const onHeaderButtonClick = useCallback(() => {
+    if (window.top != null) {
+      window.top.postMessage("close", "*");
+    }
+  }, []);
+
   return (
     <Layout>
+      <div className={styles.header}>
+        <button className={styles.headerButton} onClick={onHeaderButtonClick}>
+          <Logo className={styles.headerIcon} />
+        </button>
+      </div>
       <div className={styles.containerList}>
         {sortedEntries.map(([titleName, thumbnails], index) => {
           const { relativePath } = thumbnails[0];
