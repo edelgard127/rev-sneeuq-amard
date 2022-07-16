@@ -84,7 +84,7 @@ async function enlargeFile(filePath, index) {
     const absoluteTargetFilePath = path.resolve(
       process.cwd(),
       fileDirectory,
-      `${targetFileName}_${WAIFU2X_SUFFIX}.webp`
+      `${targetFileName}_${WAIFU2X_SUFFIX}.png`
     );
     const absoluteFilePath = path.resolve(process.cwd(), filePath);
     const scale = width < IDEAL_PAGE_WIDTH / 2 ? 4 : 2;
@@ -93,7 +93,7 @@ async function enlargeFile(filePath, index) {
     );
     try {
       await exec(
-        `${WAIFU2X_BIN_PATH} -i "${absoluteFilePath}" -o "${absoluteTargetFilePath}" -n 0 -s ${scale} -t 512 -m models-cunet -g 0 -j 2:2:2 -f webp`
+        `${WAIFU2X_BIN_PATH} -i "${absoluteFilePath}" -o "${absoluteTargetFilePath}" -n 0 -s ${scale} -t 512 -m models-cunet -g 0 -j 2:2:2 -f png`
       );
       await fsPromises.access(absoluteTargetFilePath);
     } catch (err) {
@@ -166,7 +166,7 @@ async function processTitle(titleDirPath) {
   }
 
   const enlargedFilePaths = await searchFiles(
-    `${titleDirPath}/${ENLARGED_FILE_PREFIX}_*.{png,jpg,jpeg}`
+    `${titleDirPath}/${ENLARGED_FILE_PREFIX}_*.{png,jpg,jpeg,webp}`
   );
 
   if (enlargeError != null) {
