@@ -22,19 +22,28 @@ const WAIFU2X_BIN_PATH = path.join(
 );
 const ENLARGED_FILE_PREFIX = "hentie2110";
 const WAIFU2X_SUFFIX = "waifu2x";
+const MAX_PAGE_WIDTH = 4096;
 const IDEAL_PAGE_WIDTH = 2048;
-const IDEAL_HEIGHT = 2732;
 const IDEAL_THUMBNAIL_WIDTH = 600;
 
-async function compressFile(filePath, maximumWidth) {
+async function compressFile(filePath, minimumWidth, maximumWidth) {
   const fileExtension = getFileExtension(filePath);
   const fileName = path.basename(filePath);
   const newFilePath = filePath.replace(fileExtension, "webp");
   const { width, height } = sizeOf(filePath);
   const encoder = new CWebp(filePath);
-  if (width > maximumWidth && fileName.includes(WAIFU2X_SUFFIX)) {
-    encoder.resize(maximumWidth, 0);
+  const isEnlargedImage = fileName.includes(WAIFU2X_SUFFIX);
+
+  if (isEnlargedImage) {
+    // Always resize enlarged image to minimum ideal width
+    encoder.resize(minimumWidth, 0);
+  } else {
+    // For original image, we will only resize if it exceeds maximum width
+    if (width > maximumWidth) {
+      encoder.resize(maximumWidth, 0);
+    }
   }
+
   encoder.quality(100);
   await encoder.write(newFilePath);
 }
@@ -158,10 +167,14 @@ async function processTitle(titleDirPath) {
   let compressError;
   const compressPoolLimit = pLimit(COMPRESS_WORKERS_COUNT);
   const compressPageTasks = enlargedFilePaths.map((filePath) =>
-    compressPoolLimit(() => compressFile(filePath, IDEAL_PAGE_WIDTH))
+    compressPoolLimit(() =>
+      compressFile(filePath, IDEAL_PAGE_WIDTH, MAX_PAGE_WIDTH)
+    )
   );
   const compressThumbnailTasks = thumbnailPaths.map((filePath) =>
-    compressPoolLimit(() => compressFile(filePath, IDEAL_THUMBNAIL_WIDTH))
+    compressPoolLimit(() =>
+      compressFile(filePath, IDEAL_THUMBNAIL_WIDTH, IDEAL_THUMBNAIL_WIDTH)
+    )
   );
   try {
     await Promise.all([...compressPageTasks, ...compressThumbnailTasks]);
