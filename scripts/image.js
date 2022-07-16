@@ -39,16 +39,13 @@ async function compressFile(filePath, minimumWidth, maximumWidth) {
   const { width, height } = sizeOf(filePath);
   const encoder = new CWebp(filePath);
   const isEnlargedImage = fileName.includes(WAIFU2X_SUFFIX);
-  const requiresResize = false;
 
   if (isEnlargedImage) {
     // Always resize enlarged image to minimum ideal width
-    requiresResize = true;
     encoder.resize(minimumWidth, 0);
   } else {
     // For original image, we will only resize if it exceeds maximum width
     if (width > maximumWidth) {
-      requiresResize = true;
       encoder.resize(maximumWidth, 0);
     }
   }
@@ -206,7 +203,7 @@ async function processTitle(titleDirPath) {
   try {
     await Promise.all([...compressPageTasks, ...compressThumbnailTasks]);
   } catch (err) {
-    hasCompressError = err;
+    compressError = err;
   }
 
   const compressedFilePaths = await searchFiles(
