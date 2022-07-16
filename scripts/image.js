@@ -55,8 +55,8 @@ async function compressFile(filePath, minimumWidth, maximumWidth) {
   encoder.quality(100);
   await encoder.write(newWebpFilePath);
 
-  const webpFileSize = getFileSize(newWebpFilePath);
-  const originalFileSize = getFileSize(filePath);
+  const webpFileSize = await getFileSize(newWebpFilePath);
+  const originalFileSize = await getFileSize(filePath);
 
   // Always use WebP image when the result size is smaller
   if (originalFileSize > webpFileSize) {
