@@ -10,6 +10,7 @@ const {
   getDirectories,
   getFileExtension,
   deleteFiles,
+  getFileSize,
 } = require("./utils/file");
 const { naturalCompare, padNumber } = require("./utils/string");
 const { pLimit } = require("./utils/pool");
@@ -22,30 +23,56 @@ const WAIFU2X_BIN_PATH = path.join(
 );
 const ENLARGED_FILE_PREFIX = "hentie2110";
 const WAIFU2X_SUFFIX = "waifu2x";
+const COMPRESSED_FILE_PREFIX = "compressed";
 const MAX_PAGE_WIDTH = 4096;
 const IDEAL_PAGE_WIDTH = 2048;
 const IDEAL_THUMBNAIL_WIDTH = 600;
 
 async function compressFile(filePath, minimumWidth, maximumWidth) {
   const fileExtension = getFileExtension(filePath);
+  const fileDirectory = path.dirname(filePath);
   const fileName = path.basename(filePath);
-  const newFilePath = filePath.replace(fileExtension, "webp");
+  const fileNameWithoutExtension = fileName.replace(`.${fileExtension}`, "");
+  const newFileNameWithoutExtension = `${COMPRESSED_FILE_PREFIX}_${fileNameWithoutExtension}`;
+
+  const newWebpFilePath = `${fileDirectory}/${newFileNameWithoutExtension}.webp`;
   const { width, height } = sizeOf(filePath);
   const encoder = new CWebp(filePath);
   const isEnlargedImage = fileName.includes(WAIFU2X_SUFFIX);
+  const requiresResize = false;
 
   if (isEnlargedImage) {
     // Always resize enlarged image to minimum ideal width
+    requiresResize = true;
     encoder.resize(minimumWidth, 0);
   } else {
     // For original image, we will only resize if it exceeds maximum width
     if (width > maximumWidth) {
+      requiresResize = true;
       encoder.resize(maximumWidth, 0);
     }
   }
-
   encoder.quality(100);
-  await encoder.write(newFilePath);
+  await encoder.write(newWebpFilePath);
+
+  const webpFileSize = getFileSize(newWebpFilePath);
+  const originalFileSize = getFileSize(filePath);
+
+  // Always use WebP image when the result size is smaller
+  if (originalFileSize > webpFileSize) {
+    return;
+  }
+
+  // Delete the WebP image & simply copy the image
+  console.log(
+    `Image ${fileName} has a larger-sized converted WebP image so we will just use the original image...`
+  );
+  await deleteFiles([newWebpFilePath]);
+  const targetFilePath = path.join(
+    fileDirectory,
+    `./${newFileNameWithoutExtension}.${fileExtension}`
+  );
+  await fsPromises.copyFile(filePath, targetFilePath);
 }
 
 async function enlargeFile(filePath, index) {
@@ -60,7 +87,7 @@ async function enlargeFile(filePath, index) {
     const absoluteTargetFilePath = path.resolve(
       process.cwd(),
       fileDirectory,
-      `${targetFileName}_${WAIFU2X_SUFFIX}.png`
+      `${targetFileName}_${WAIFU2X_SUFFIX}.webp`
     );
     const absoluteFilePath = path.resolve(process.cwd(), filePath);
     const scale = width < IDEAL_PAGE_WIDTH / 2 ? 4 : 2;
@@ -69,7 +96,7 @@ async function enlargeFile(filePath, index) {
     );
     try {
       await exec(
-        `${WAIFU2X_BIN_PATH} -i "${absoluteFilePath}" -o "${absoluteTargetFilePath}" -n 0 -s ${scale} -t 512 -m models-cunet -g 0 -j 2:2:2 -f png`
+        `${WAIFU2X_BIN_PATH} -i "${absoluteFilePath}" -o "${absoluteTargetFilePath}" -n 0 -s ${scale} -t 512 -m models-cunet -g 0 -j 2:2:2 -f webp`
       );
       await fsPromises.access(absoluteTargetFilePath);
     } catch (err) {
@@ -182,7 +209,9 @@ async function processTitle(titleDirPath) {
     hasCompressError = err;
   }
 
-  const compressedFilePaths = await searchFiles(`${titleDirPath}/*.webp`);
+  const compressedFilePaths = await searchFiles(
+    `${titleDirPath}/${COMPRESSED_FILE_PREFIX}_*`
+  );
 
   if (compressError != null) {
     console.error(
