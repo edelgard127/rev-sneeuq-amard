@@ -24,11 +24,12 @@ const WAIFU2X_BIN_PATH = path.join(
 const ENLARGED_FILE_PREFIX = "hentie2110";
 const WAIFU2X_SUFFIX = "waifu2x";
 const COMPRESSED_FILE_PREFIX = "compressed";
+const MIN_WIDTH_SKIP_ENLARGE = 2000;
 const MAX_PAGE_WIDTH = 4096;
 const IDEAL_PAGE_WIDTH = 2048;
 const IDEAL_THUMBNAIL_WIDTH = 600;
 
-async function compressFile(filePath, minimumWidth, maximumWidth) {
+async function compressFile(filePath, enlargedTargetWidth, maximumWidth) {
   const fileExtension = getFileExtension(filePath);
   const fileDirectory = path.dirname(filePath);
   const fileName = path.basename(filePath);
@@ -41,8 +42,8 @@ async function compressFile(filePath, minimumWidth, maximumWidth) {
   const isEnlargedImage = fileName.includes(WAIFU2X_SUFFIX);
 
   if (isEnlargedImage) {
-    // Always resize enlarged image to minimum ideal width
-    encoder.resize(minimumWidth, 0);
+    // Always resize enlarged image to target ideal width
+    encoder.resize(enlargedTargetWidth, 0);
   } else {
     // For original image, we will only resize if it exceeds maximum width
     if (width > maximumWidth) {
@@ -79,7 +80,7 @@ async function enlargeFile(filePath, index) {
   const { width, height } = sizeOf(filePath);
   const targetFileName = `${ENLARGED_FILE_PREFIX}_${padNumber(index)}`;
 
-  if (width < IDEAL_PAGE_WIDTH) {
+  if (width < MIN_WIDTH_SKIP_ENLARGE) {
     // Need to enlarge the image
     const absoluteTargetFilePath = path.resolve(
       process.cwd(),
@@ -87,7 +88,7 @@ async function enlargeFile(filePath, index) {
       `${targetFileName}_${WAIFU2X_SUFFIX}.png`
     );
     const absoluteFilePath = path.resolve(process.cwd(), filePath);
-    const scale = width < IDEAL_PAGE_WIDTH / 2 ? 4 : 2;
+    const scale = width < MIN_WIDTH_SKIP_ENLARGE / 2 ? 4 : 2;
     console.log(
       `Enlarging image ${fileName} with Waifu2x at scale x${scale}...`
     );
