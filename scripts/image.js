@@ -123,7 +123,7 @@ async function processTitle(titleDirPath) {
   const titleDirPattern = escapeFilePathForPattern(titleDirPath);
   const titleName = path.basename(titleDirPath);
   console.log(`Processing title '${titleName}'...`);
-  let filePaths = await searchFiles(`${titleDirPattern}/*.{png,jpg,jpeg}`);
+  let filePaths = await searchFiles(`${titleDirPattern}/*.{png,jpg,jpeg,webp}`);
 
   // Sort file paths in natural order
   filePaths.sort(naturalCompare);
